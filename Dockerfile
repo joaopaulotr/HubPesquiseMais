@@ -16,10 +16,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código da aplicação
 COPY app/ ./app/
-COPY .env .env
 
 # Criar diretórios necessários
 RUN mkdir -p uploads outputs
+
+# Variáveis de ambiente (definir na plataforma de deploy)
+ENV OPENAI_API_KEY=""
+ENV WHISPER_MODEL="base"
+ENV MAX_FILE_SIZE_MB="100"
 
 # Expor porta
 EXPOSE 8000
