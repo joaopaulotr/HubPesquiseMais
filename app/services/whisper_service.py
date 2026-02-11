@@ -1,7 +1,22 @@
 import whisper
 import os
+import shutil
 from typing import Dict, Any
 from app.config import settings
+import imageio_ffmpeg
+
+# Configurar FFmpeg para Whisper
+ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+ffmpeg_dir = os.path.dirname(ffmpeg_exe)
+ffmpeg_standard = os.path.join(ffmpeg_dir, "ffmpeg.exe")
+
+# Criar cópia com nome padrão se não existir
+if not os.path.exists(ffmpeg_standard):
+    shutil.copy2(ffmpeg_exe, ffmpeg_standard)
+
+# Adicionar ao PATH
+os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
+os.environ["FFMPEG_BINARY"] = ffmpeg_standard
 
 class WhisperService:
     _instance = None
