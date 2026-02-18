@@ -11,6 +11,12 @@ class Settings:
     MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "100"))
     MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
     
+    # GPT Settings
+    GPT_MAX_TOKENS = int(os.getenv("GPT_MAX_TOKENS", "500"))
+    GPT_MAX_TOKENS_VIDEO = int(os.getenv("GPT_MAX_TOKENS_VIDEO", "700"))
+    GPT_MAX_INPUT_CHARS = int(os.getenv("GPT_MAX_INPUT_CHARS", "3000"))
+    GPT_MAX_INPUT_CHARS_VIDEO = int(os.getenv("GPT_MAX_INPUT_CHARS_VIDEO", "2000"))
+    
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
     OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")

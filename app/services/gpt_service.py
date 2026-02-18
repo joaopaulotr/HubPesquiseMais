@@ -5,7 +5,7 @@ class GPTService:
     def __init__(self):
         self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
     
-    def generate_description(self, transcription_text: str, max_tokens: int = 500) -> str:
+    def generate_description(self, transcription_text: str, max_tokens: int = None) -> str:
         """
         Gera uma descrição concisa a partir de um vídeo.
         
@@ -17,7 +17,10 @@ class GPTService:
             Descrição gerada pelo GPT
         """
         # Limitar o tamanho da transcrição para reduzir custos
-        max_input_chars = 3000
+        if max_tokens is None:
+            max_tokens = settings.GPT_MAX_TOKENS
+        
+        max_input_chars = settings.GPT_MAX_INPUT_CHARS
         if len(transcription_text) > max_input_chars:
             transcription_text = transcription_text[:max_input_chars] + "..."
         
@@ -52,7 +55,7 @@ Descrição:"""
         except Exception as e:
             raise Exception(f"Erro ao gerar descrição com GPT: {str(e)}")
     
-    def analyze_video_complete(self, frames_base64: list, transcription_text: str, max_tokens: int = 700) -> str:
+    def analyze_video_complete(self, frames_base64: list, transcription_text: str, max_tokens: int = None) -> str:
         """
         Análise COMPLETA: visual (frames) + áudio (transcrição)
         
@@ -66,7 +69,10 @@ Descrição:"""
         """
         try:
             # Limitar transcrição para controlar custos
-            max_chars = 2000
+            if max_tokens is None:
+                max_tokens = settings.GPT_MAX_TOKENS_VIDEO
+            
+            max_chars = settings.GPT_MAX_INPUT_CHARS_VIDEO
             if len(transcription_text) > max_chars:
                 transcription_text = transcription_text[:max_chars] + "..."
             
@@ -115,6 +121,54 @@ Descrição:"""
         
         except Exception as e:
             raise Exception(f"Erro ao analisar vídeo: {str(e)}")
+
+    def generate_transcription_analysis(self, transcription_text: str, max_tokens: int = None) -> str:
+        """
+        Análise detalhada do conteúdo de áudio
+        
+        Args:
+            transcription_text: Texto transcrito do áudio
+            max_tokens: Tokens máximos
+        Returns:
+            Análise detalhada do conteúdo de áudio
+        """
+        if max_tokens is None:
+            max_tokens = settings.GPT_MAX_TOKENS
+        
+        max_input_chars = settings.GPT_MAX_INPUT_CHARS
+        if len(transcription_text) > max_input_chars:
+            transcription_text = transcription_text[:max_input_chars] + "..."
+        
+        prompt = f"""Você é um assistente que cria descrições concisas e informativas de transcrições.
+
+Tarefa: Analise a transcrição abaixo e crie uma descrição clara e objetiva do conteúdo do vídeo.
+
+A descrição deve:
+- Ter entre 2-4 parágrafos
+- Destacar os principais tópicos abordados
+- Ser útil para alguém que deseja saber do que se trata o vídeo
+- Usar linguagem clara e profissional
+
+Transcrição:
+{transcription_text}
+
+Descrição:"""
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "Você é um assistente especializado em criar descrições de transcrições."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=max_tokens,
+                temperature=0.7
+            )
+            
+            return response.choices[0].message.content.strip()
+        
+        except Exception as e:
+            raise Exception(f"Erro ao gerar descrição com GPT: {str(e)}")
+
 
 # Instance
 gpt_service = GPTService()
