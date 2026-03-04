@@ -8,20 +8,16 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
+    env_file:
+      - .env
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - WHISPER_MODEL=base
-      - MAX_FILE_SIZE_MB=100
+      - WHISPER_MODEL=${WHISPER_MODEL:-base}
+      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-100}
+      - ALLOW_ORIGINS=${ALLOW_ORIGINS:-*}
     restart: unless-stopped
-
-  frontend:
-    image: node:18-alpine
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-    ports:
-      - "5173:5173"
-    command: sh -c "npm install && npm run dev"
-    depends_on:
-      - backend
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

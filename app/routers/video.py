@@ -49,6 +49,7 @@ async def generate_video_description(
     
     try:
         # Salvar vídeo
+        print(f"📹 Recebendo vídeo: {file.filename}")
         content = await file.read()
         
         if len(content) > settings.MAX_FILE_SIZE_BYTES:
@@ -59,16 +60,24 @@ async def generate_video_description(
         
         with open(video_path, "wb") as f:
             f.write(content)
+        print(f"✅ Vídeo salvo: {video_path}")
         
         # Extrair áudio E frames
+        print("🎵 Extraindo áudio e frames...")
         audio_path, frames_base64 = video_service.extract_audio_and_frames(video_path, num_frames=6)
+        print(f"✅ Áudio extraído: {audio_path}")
+        print(f"✅ Frames extraídos: {len(frames_base64)}")
         
         # Transcrever áudio com Whisper
+        print("🎤 Transcrevendo áudio com Whisper...")
         transcription_result = whisper_service.transcribe(audio_path)
         transcription_text = transcription_result["text"]
+        print(f"✅ Transcrição completa: {len(transcription_text)} caracteres")
         
         # Analisar TUDO com GPT-4 Vision (áudio + visual)
+        print("🤖 Analisando com GPT-4 Vision...")
         description = gpt_service.analyze_video_complete(frames_base64, transcription_text)
+        print("✅ Análise completa!")
         
         # Salvar resultado
         desc_filename = f"{unique_id}_description.txt"

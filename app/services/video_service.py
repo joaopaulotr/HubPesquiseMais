@@ -3,6 +3,14 @@ import os
 import base64
 from typing import List, Tuple
 from app.config import settings
+import imageio_ffmpeg
+import cv2
+
+# Configurar FFmpeg
+ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+ffmpeg_dir = os.path.dirname(ffmpeg_exe)
+os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
+print(f"🔧 FFmpeg configurado: {ffmpeg_exe}")
 
 class VideoService:
     def extract_audio(self, video_path: str, output_path: str = None) -> str:
@@ -26,7 +34,7 @@ class VideoService:
         try:
             stream = ffmpeg.input(video_path)
             stream = ffmpeg.output(stream, output_path, acodec='libmp3lame', ab='192k')
-            ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True, quiet=True)
+            ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True, quiet=True, cmd=ffmpeg_exe)
             return output_path
         except ffmpeg.Error as e:
             error_message = e.stderr.decode() if e.stderr else str(e)
@@ -47,9 +55,14 @@ class VideoService:
             raise FileNotFoundError(f"Arquivo de vídeo não encontrado: {video_path}")
         
         try:
-            # Obter duração do vídeo
-            probe = ffmpeg.probe(video_path)
-            duration = float(probe['streams'][0]['duration'])
+            # Obter duração do vídeo usando OpenCV
+            cap = cv2.VideoCapture(video_path)
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            duration = frame_count / fps if fps > 0 else 60  # fallback 60s
+            cap.release()
+            
+            print(f"📊 Vídeo: {duration:.2f}s, {frame_count} frames, {fps:.2f} FPS")
             
             # Calcular intervalos para extrair frames
             interval = duration / (num_frames + 1)
@@ -72,7 +85,7 @@ class VideoService:
                     .filter('scale', 512, -1)  # Redimensionar para economizar tokens
                     .output(frame_path, vframes=1, format='image2', vcodec='mjpeg')
                     .overwrite_output()
-                    .run(capture_stdout=True, capture_stderr=True, quiet=True)
+                    .run(capture_stdout=True, capture_stderr=True, quiet=True, cmd=ffmpeg_exe)
                 )
                 
                 # Converter para base64
@@ -90,6 +103,21 @@ class VideoService:
         
         except Exception as e:
             raise Exception(f"Erro ao extrair frames do vídeo: {str(e)}")
+    
+    def extract_audio_and_frames(self, video_path: str, num_frames: int = 6) -> Tuple[str, List[str]]:
+        """
+        Extrai áudio e frames do vídeo de uma vez
+        
+        Args:
+            video_path: Caminho para o arquivo de vídeo
+            num_frames: Número de frames para extrair
+            
+        Returns:
+            Tupla: (caminho_audio, lista_frames_base64)
+        """
+        audio_path = self.extract_audio(video_path)
+        frames_base64 = self.extract_frames(video_path, num_frames)
+        return audio_path, frames_base64
 
 # Instance
 video_service = VideoService()

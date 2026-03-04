@@ -21,7 +21,9 @@ class Settings:
     UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
     OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
     
-    ALLOW_ORIGINS = ["http://localhost:5173", "http://localhost:3000", "http://localhost:8080"]
+    # Aceita lista separada por vírgula ou "*" para liberar tudo
+    _allow_origins_raw = os.getenv("ALLOW_ORIGINS", "*")
+    ALLOW_ORIGINS = [o.strip() for o in _allow_origins_raw.split(",")] if _allow_origins_raw != "*" else ["*"]
 
 settings = Settings()
 
