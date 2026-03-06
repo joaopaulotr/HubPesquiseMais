@@ -3,11 +3,12 @@ uvicorn[standard]==0.27.0
 python-multipart==0.0.6
 python-dotenv==1.0.0
 numpy<2.0
+httpx<0.28
+opencv-python-headless
 
-# torch é instalado via Dockerfile com --index-url CPU-only (evita CUDA ~2GB)
 openai-whisper==20231117
 
 # Para análise de vídeo
 ffmpeg-python==0.2.0
 openai==1.10.0
-imageio-ffmpeg==0.4.9   # ← era 0.6.0, versão que não existe
+imageio-ffmpeg==0.4.9

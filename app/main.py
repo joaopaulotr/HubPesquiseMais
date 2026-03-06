@@ -1,6 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, Request
-from pyrate_limiter import Duration, Limiter, Rate
-from fastapi_limiter.depends import RateLimiter
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.config import settings
@@ -28,17 +26,7 @@ app.mount("/outputs", StaticFiles(directory=settings.OUTPUT_DIR), name="outputs"
 app.include_router(audio.router)
 app.include_router(video.router)
 
-async def default_identifier(request: Request):
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        ip = forwarded.split(",")[0]
-    elif request.client:
-        ip = request.client.host
-    else:
-        ip = "127.0.0.1"
-    return ip + ":" + request.scope["path"]
-
-@app.get("/", dependencies=[Depends(RateLimiter(times=10, seconds=60, identifier=default_identifier))])
+@app.get("/")
 async def root():
     return {
         "message": "Pesquise+Hub API",
